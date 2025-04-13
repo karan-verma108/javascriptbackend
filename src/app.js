@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import { datalimit } from './contants';
+import { datalimit } from './contants.js';
 
 const app = express();
 //let's define the cors origin
@@ -23,5 +23,11 @@ app.use(express.static('public'));
 
 // for parsing cookies that will be stored on the client side and will be sent to the server
 app.use(cookieParser());
+
+//importing routes
+import userRouter from './routes/userRoutes.js';
+
+//routes declaration
+app.use('/api/v1/users', userRouter);
 
 export { app };
