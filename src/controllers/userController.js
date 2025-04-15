@@ -1,5 +1,6 @@
 import asyncHandler from '../utils/asyncHandler.js';
 import { User } from '../models/userSchema.js';
+import { uploadOnCloudinary } from '../utils/cloudinary.js';
 
 const registerUser = asyncHandler(async (req, res) => {
   //let's take values from the frontend (from postman for the time being)
@@ -28,9 +29,45 @@ const registerUser = asyncHandler(async (req, res) => {
     res.status(409).json({ error: 'User already exists' });
   }
 
-  res.status(200).json({
-    message: 'success',
-    email: email,
+  //now let's check if we got the uploaded images on the local using multer or not
+  const avatarImageLocalPath = req.files?.avatar?.[0]?.path;
+  const coverImageLocalPath = req.files?.coverImage?.[0]?.path;
+
+  if (!avatarImageLocalPath) {
+    res.status(400).json({ error: 'Avatar image is required' });
+  }
+
+  //let's upload the localImagePath to cloudinary
+  const avatar = await uploadOnCloudinary(avatarImageLocalPath);
+  const coverImage = await uploadOnCloudinary(coverImageLocalPath);
+
+  if (!avatar) {
+    res.status(400).json({ error: 'Avatar image is required' });
+  }
+
+  //let's create a document in our db using the values of the user we got above (using Collection.Create() method)
+  const user = await User.create({
+    userName,
+    avatar: avatar?.url,
+    coverImage: coverImage?.url ?? '',
+    email,
+    password,
+    fullName,
+  });
+
+  //let's remove password and refreshToken fields from the response as we don't want to show that to the user
+  const userCreatedInDb = await User.findById(user?._id).select(
+    '-password -refreshToken'
+  );
+
+  if (!userCreatedInDb) {
+    res
+      .status(500)
+      .json({ error: 'Something went wrong while registering the user' });
+  }
+
+  res.status(201).json({
+    userCreatedInDb,
   });
 });
 
