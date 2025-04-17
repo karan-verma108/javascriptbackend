@@ -34,7 +34,7 @@ const registerUser = asyncHandler(async (req, res) => {
   const coverImageLocalPath = req.files?.coverImage?.[0]?.path;
 
   if (!avatarImageLocalPath) {
-    res.status(400).json({ error: 'Avatar image is required' });
+    res.status(400).json({ error: 'Avatar image is required from multer' });
   }
 
   //let's upload the localImagePath to cloudinary
@@ -42,7 +42,7 @@ const registerUser = asyncHandler(async (req, res) => {
   const coverImage = await uploadOnCloudinary(coverImageLocalPath);
 
   if (!avatar) {
-    res.status(400).json({ error: 'Avatar image is required' });
+    res.status(400).json({ error: 'Avatar image is required from cloudinary' });
   }
 
   //let's create a document in our db using the values of the user we got above (using Collection.Create() method)
