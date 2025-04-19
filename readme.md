@@ -38,3 +38,34 @@ vii) now if there is any error from the client (user's) side maybe in relation t
 viii) if it's not the case, but the form submision fails due to server error, then show appropriate message to the user
 ix) if there's no such issue, then submit the form and save the values to the db
 x) lastly show a success alert/message to the user, stating the form has been submited
+
+# Access tokens and Refresh tokens:
+
+
+i) Access Token
+
+a) Short-lived: Typically valid for minutes to an hour.
+b) Purpose: Used to access protected resources/APIs (e.g., user profile, dashboard).
+c) Storage: Usually stored in memory (e.g., local variables) to minimize exposure to XSS attacks.
+
+⚠️ Should not be stored in localStorage or sessionStorage due to XSS risks.
+
+ii) Refresh Token
+
+a) Long-lived: Valid for hours to weeks, depending on implementation.
+b) Purpose: Used to obtain new access tokens without requiring the user to log in again.
+c) Storage: Stored in HttpOnly, Secure cookies, which are inaccessible to JavaScript.
+d) HttpOnly: Protects against XSS attacks.
+e) Secure: Ensures the cookie is sent only over HTTPS.
+
+🔐 Must be protected against CSRF attacks, usually by using same-site cookies, anti-CSRF tokens, or requiring the use of refresh tokens only from trusted backends.
+
+# Steps to login a user:
+
+i) Obtain credentials entered by user
+ii) Check if email/username exists in the db
+iii) If doesn't exist, give message, 'User doesn't exist, register first'
+iv) If exist, check if password matches with the entered password
+v) If not, give message, 'password doesn't match, try again or reset password'
+vi) If yes, then allow the user to login while passing access and refresh tokens to user
+vii) send cookie
