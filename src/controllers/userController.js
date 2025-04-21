@@ -2,6 +2,24 @@ import asyncHandler from '../utils/asyncHandler.js';
 import { User } from '../models/userSchema.js';
 import { uploadOnCloudinary } from '../utils/cloudinary.js';
 
+const generateAccessAndRefreshTokens = async (userId) => {
+  try {
+    const user = await User.findById(userId);
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+
+    //adding refresh token field to the user of the userId we found from mongodb
+    user.refreshToken = refreshToken;
+    await user.save({ validateBeforeSave: false });
+
+    return { accessToken, refreshToken };
+  } catch (error) {
+    res.status(500).json({
+      error: 'Something went wrong while generating refresh and access tokens',
+    });
+  }
+};
+
 const registerUser = asyncHandler(async (req, res) => {
   //let's take values from the frontend (from postman for the time being)
   const { userName, email, fullName, password } = req.body;
@@ -69,6 +87,64 @@ const registerUser = asyncHandler(async (req, res) => {
   res.status(201).json({
     userCreatedInDb,
   });
+});
+
+const loginUser = asyncHandler(async (req, res) => {
+  //let's check if we got data in req.body or not
+  const { userName, email, password } = req.body;
+
+  //checking if username or email is missing from user
+  if (!userName || !email) {
+    return res.status(400).json({ error: 'Username or email is required' });
+  }
+
+  //let's find the user based on username or email given by user
+  const user = await User.findOne({
+    $or: [
+      {
+        userName,
+      },
+      { email },
+    ],
+  });
+
+  if (!user) {
+    return res.status(404).json({ error: 'User does not exist' });
+  }
+
+  //checking if the password matches with the saved password in the db
+  const isPasswordValid = await user.isPasswordCorrect(password);
+
+  if (!isPasswordValid) {
+    res.status(401).json({ error: 'Invalid credentials, please try again' }); //401 - unauthorized
+  }
+
+  //generating access and refresh tokens
+  const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
+    user._id
+  );
+
+  //updating the response user to exclude password and refresh token fields
+  const loggedInUser = await User.findById(user._id).select(
+    '-password -refreshToken'
+  );
+
+  //let's send cookies
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .cookie('accessToken', accessToken, options)
+    .cookie('refreshToken', refreshToken, options)
+    .json({
+      message: 'User logged in successfully!',
+      user: loggedInUser,
+      accessToken,
+      refreshToken,
+    });
 });
 
 export { registerUser };
