@@ -69,3 +69,9 @@ iv) If exist, check if password matches with the entered password
 v) If not, give message, 'password doesn't match, try again or reset password'
 vi) If yes, then allow the user to login while passing access and refresh tokens to user
 vii) send cookie
+
+
+# To logout a user:
+
+i) Clear the cookies first (access token, refresh token)
+ii) Reset/delete the refresh token stored in the db corresponding to that user (because we dont want user to keep using that refresh token and keep requesting new access tokens to keep them logged in)

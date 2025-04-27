@@ -147,4 +147,31 @@ const loginUser = asyncHandler(async (req, res) => {
     });
 });
 
-export { registerUser };
+const logoutUser = asyncHandler(async (req, res) => {
+  //lets update the refreshToken field in the db by resetting it
+  await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: {
+        refreshToken: undefined,
+      },
+    },
+    {
+      new: true,
+    }
+  );
+
+  //lets delete the cookies now
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .clearCookie('accessToken', options)
+    .clearCookie('refreshToken', options)
+    .json({ message: 'User logged out' });
+});
+
+export { registerUser, loginUser, logoutUser };
