@@ -1,6 +1,7 @@
 import asyncHandler from '../utils/asyncHandler.js';
 import { User } from '../models/userSchema.js';
 import { uploadOnCloudinary } from '../utils/cloudinary.js';
+import { options } from '../contants.js';
 
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
@@ -130,10 +131,6 @@ const loginUser = asyncHandler(async (req, res) => {
   );
 
   //let's send cookies
-  const options = {
-    httpOnly: true,
-    secure: true,
-  };
 
   return res
     .status(200)
@@ -162,10 +159,6 @@ const logoutUser = asyncHandler(async (req, res) => {
   );
 
   //lets delete the cookies now
-  const options = {
-    httpOnly: true,
-    secure: true,
-  };
 
   return res
     .status(200)
