@@ -4,7 +4,8 @@ import {
   logoutUser,
   registerUser,
 } from '../controllers/userController.js';
-import { upload, verifyJWT } from '../middlewares';
+import { upload } from '../middlewares/multer.js';
+import { verifyJWT } from '../middlewares/auth.js';
 
 const router = Router();
 
@@ -26,6 +27,6 @@ router.route('/register').post(
 router.route('/login').post(loginUser);
 
 //secured routes , we're calling verifyJWT middleware before performing the logoutUser method
-router.route('/logout', verifyJWT, logoutUser);
+router.route('/logout').post(verifyJWT, logoutUser);
 
 export default router;

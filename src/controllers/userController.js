@@ -146,6 +146,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
 const logoutUser = asyncHandler(async (req, res) => {
   //lets update the refreshToken field in the db by resetting it
+  //we got the res.user because earlier in the verifyJWT middleware we added the user object to the req object
   await User.findByIdAndUpdate(
     req.user._id,
     {
