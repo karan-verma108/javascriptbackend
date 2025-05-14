@@ -75,3 +75,22 @@ vii) send cookie
 
 i) Clear the cookies first (access token, refresh token)
 ii) Reset/delete the refresh token stored in the db corresponding to that user (because we dont want user to keep using that refresh token and keep requesting new access tokens to keep them logged in)
+
+# Let's understand more about access token and refresh token (session token):
+
+When a user logs in, they get an access token, that's short lived. A refresh token for that respective user is stored in the database. Now, till the access token is valid and not expired, user can access or explore all the restricted content on the website. The moment the access token is invalidated/gets expired, then if user tries to access the same restricted content or resource so they would get a 401 (unauthorized) error. This is because now the access token is invalidated/expired. So now the user will have to login again in order to generate a new access token (and a new refresh token will also be generated, that will be stored in the database for that respective user). Another way, a more convenient way, for users is, to monitor the 401 state, so when the 401 error comes, we can redirect user to a new path/url/route wherein, without having to login again, they'd be prompted to simply hit a new request (for refreshing the access token), there we (the client) pass the existing refresh token in the request and compare that with the refresh token that's present in the database, if both are equal, so a new session is started by generating new access and refresh token (hence not needing to login again).
+
+A more technical explaination below 👍
+
+When a user logs in, they receive an access token, which is short-lived and used to access protected resources. Along with this, a refresh token is issued and stored securely in the database for that specific user.
+As long as the access token is valid (i.e., not expired), the user can access restricted content on the website. Once the access token expires or becomes invalid, any attempt to access protected resources will result in a 401 Unauthorized error.
+
+At this point, the user has two options:
+Manual re-authentication: The user logs in again to obtain a new access token and a new refresh token (which replaces the old one in the database).
+Token refresh flow (preferred): The application detects the 401 response and redirects the user to a route that silently handles token refreshing. In this flow:
+
+The client sends the existing refresh token to the server.
+The server verifies the refresh token by comparing it with the one stored in the database.
+If valid, the server issues a new pair of access and refresh tokens and updates the database accordingly.
+This allows the user to continue without having to log in again.
+This flow improves the user experience by maintaining sessions seamlessly without frequent re-authentication.
