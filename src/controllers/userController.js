@@ -1,3 +1,4 @@
+import jwt from 'jsonwebtoken';
 import asyncHandler from '../utils/asyncHandler.js';
 import { User } from '../models/userSchema.js';
 import { uploadOnCloudinary } from '../utils/cloudinary.js';
@@ -15,9 +16,10 @@ const generateAccessAndRefreshTokens = async (userId) => {
 
     return { accessToken, refreshToken };
   } catch (error) {
-    res.status(500).json({
-      error: 'Something went wrong while generating refresh and access tokens',
-    });
+    return {
+      success: false,
+      error: 'Token generation failed',
+    };
   }
 };
 
@@ -168,4 +170,51 @@ const logoutUser = asyncHandler(async (req, res) => {
     .json({ message: 'User logged out' });
 });
 
-export { registerUser, loginUser, logoutUser };
+const refreshAccessToken = asyncHandler(async (req, res) => {
+  //let's get the refresh token from the client (user)
+  const incomingRefreshToken =
+    req.cookies.refreshToken || req.body.refreshToken;
+
+  if (!incomingRefreshToken) {
+    res.status(401).json({ error: 'Unauthorized request' });
+  }
+
+  try {
+    // now, let's verify the incoming refresh token
+    const decodedRefreshToken = jwt.verify(
+      incomingRefreshToken,
+      process.env.REFRESH_TOKEN_SECRET
+    );
+
+    // now, since we got the decoded refresh token, meaning that now we have access to any payload (data) it was assigned while its creation (in this case, the _id), so we can use that _id to make a query to the db and get the user whose _id matches with this _id and eventually get their refresh token from the db
+    const user = await User.findById(decodedRefreshToken?._id);
+
+    //now if user doens't exist meaning that the refresh token is not preent in the db so we'll give an error response
+    if (!user) {
+      res.status(401).json({ error: 'Invalid refresh token' });
+    }
+
+    //checking the incoming refresh token and comparing it with the refresh token obtained from the user (coming from db)
+    if (incomingRefreshToken !== user?.refreshToken) {
+      res.status(401).json({ error: 'Refresh token expired or used' });
+    }
+
+    //assuming that the tokens have been compared and it's the same so let's generate the new access and refresh tokens
+    const { accessToken, newRefreshToken } =
+      await generateAccessAndRefreshTokens(user?._id);
+
+    res
+      .status(200)
+      .cookie('accessToken', accessToken, options)
+      .cookie('refreshToken', newRefreshToken, options)
+      .json({
+        accessToken,
+        refreshToken: newRefreshToken,
+        message: 'Access token refreshed',
+      });
+  } catch (error) {
+    res.status(401).json({ error: error?.message || 'Invalid refresh token' });
+  }
+});
+
+export { registerUser, loginUser, logoutUser, refreshAccessToken };

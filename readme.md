@@ -94,3 +94,17 @@ The server verifies the refresh token by comparing it with the one stored in the
 If valid, the server issues a new pair of access and refresh tokens and updates the database accordingly.
 This allows the user to continue without having to log in again.
 This flow improves the user experience by maintaining sessions seamlessly without frequent re-authentication.
+
+# How to refresh the access token 👍
+
+Note : When initially the refresh token is generated (along with access token when user logs in, we send the refresh token to user in an encrypted form while we store the same in the db, in a decrypted form)
+
+i) So the process would be like, first we have to obtain the refresh token sent by the user (client) through cookies or through the request body,
+ii) Then, we neen to verify this incoming refresh token using the verify method of jsonwebtoken to make sure that it passes the token secret signature that we've stored in the .env file
+iii) Once this is done, we will get a decoded version of this incoming refresh token
+iv) Now, we have an incoming token and we need to compare it with the refresh token stored in the db
+v) from the decoded refresh token we can easily get the _id field, so use it make a query to the db to fetch refresh token corresponding to that _id
+vi) We would have a new refresh token that's been fetched from the db.
+viii) Now if both of these refresh tokens don't match so give an error that the tokens are invalid.
+ix) Otherwise, generate a new set of refresh and access tokens using the generateAccessAndRefreshToken method
+x) While the process is continuing, also geneate cookies again with new values for access and refresh token
