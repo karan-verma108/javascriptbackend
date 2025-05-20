@@ -47,7 +47,7 @@ const registerUser = asyncHandler(async (req, res) => {
   });
 
   if (userExists) {
-    res.status(409).json({ error: 'User already exists' });
+    return res.status(409).json({ error: 'User already exists' });
   }
 
   //now let's check if we got the uploaded images on the local using multer or not
@@ -55,7 +55,9 @@ const registerUser = asyncHandler(async (req, res) => {
   const coverImageLocalPath = req.files?.coverImage?.[0]?.path;
 
   if (!avatarImageLocalPath) {
-    res.status(400).json({ error: 'Avatar image is required from multer' });
+    return res
+      .status(400)
+      .json({ error: 'Avatar image is required from multer' });
   }
 
   //let's upload the localImagePath to cloudinary
@@ -63,7 +65,9 @@ const registerUser = asyncHandler(async (req, res) => {
   const coverImage = await uploadOnCloudinary(coverImageLocalPath);
 
   if (!avatar) {
-    res.status(400).json({ error: 'Avatar image is required from cloudinary' });
+    return res
+      .status(400)
+      .json({ error: 'Avatar image is required from cloudinary' });
   }
 
   //let's create a document in our db using the values of the user we got above (using Collection.Create() method)
@@ -82,7 +86,7 @@ const registerUser = asyncHandler(async (req, res) => {
   );
 
   if (!userCreatedInDb) {
-    res
+    return res
       .status(500)
       .json({ error: 'Something went wrong while registering the user' });
   }
@@ -119,7 +123,9 @@ const loginUser = asyncHandler(async (req, res) => {
   const isPasswordValid = await user.isPasswordCorrect(password);
 
   if (!isPasswordValid) {
-    res.status(401).json({ error: 'Invalid credentials, please try again' }); //401 - unauthorized
+    return res
+      .status(401)
+      .json({ error: 'Invalid credentials, please try again' }); //401 - unauthorized
   }
 
   //generating access and refresh tokens
@@ -176,7 +182,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     req.cookies.refreshToken || req.body.refreshToken;
 
   if (!incomingRefreshToken) {
-    res.status(401).json({ error: 'Unauthorized request' });
+    return res.status(401).json({ error: 'Unauthorized request' });
   }
 
   try {
@@ -191,12 +197,12 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
     //now if user doens't exist meaning that the refresh token is not preent in the db so we'll give an error response
     if (!user) {
-      res.status(401).json({ error: 'Invalid refresh token' });
+      return res.status(401).json({ error: 'Invalid refresh token' });
     }
 
     //checking the incoming refresh token and comparing it with the refresh token obtained from the user (coming from db)
     if (incomingRefreshToken !== user?.refreshToken) {
-      res.status(401).json({ error: 'Refresh token expired or used' });
+      return res.status(401).json({ error: 'Refresh token expired or used' });
     }
 
     //assuming that the tokens have been compared and it's the same so let's generate the new access and refresh tokens
@@ -228,7 +234,7 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
   const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
 
   if (!isPasswordCorrect) {
-    res.status(400).json({ error: 'Invalid old password' });
+    return res.status(400).json({ error: 'Invalid old password' });
   }
 
   user.password = newPassword; //when isPasswordCorrect is true so we'll re-assign password in user object to newPassword
@@ -237,10 +243,22 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
   return res.status(200).json({ message: 'Password updated successfully!' });
 });
 
+const getCurrentUser = asyncHandler(async (req, res) => {
+  const user = req.user;
+  if (!user) {
+    return res.status(404).json({ error: 'User does not exist' });
+  }
+
+  return res
+    .status(200)
+    .json({ message: 'Current user fetched successfully!', user });
+});
+
 export {
   registerUser,
   loginUser,
   logoutUser,
   refreshAccessToken,
   changeCurrentPassword,
+  getCurrentUser,
 };

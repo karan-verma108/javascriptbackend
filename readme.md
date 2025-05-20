@@ -116,3 +116,9 @@ ii) also obtain the current user's details
 iii) if the old password matches with the password stored in the db w.r.t. that user, then proceed further, else exit the process by giving an error
 iv) reassign the password field in the user object with the new password obtained from the req.body
 v) return a OK response to the user stating password has been changed/updated
+
+# How to get the current user 👍
+
+i) check if user is logged in,
+ii) if true, then get the user object from request object
+iii) return that user object as a response
