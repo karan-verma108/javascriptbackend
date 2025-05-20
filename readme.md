@@ -108,3 +108,11 @@ vi) We would have a new refresh token that's been fetched from the db.
 viii) Now if both of these refresh tokens don't match so give an error that the tokens are invalid.
 ix) Otherwise, generate a new set of refresh and access tokens using the generateAccessAndRefreshToken method
 x) While the process is continuing, also geneate cookies again with new values for access and refresh token
+
+# How to change the password 👍
+
+i) obtain old password and new password from the user
+ii) also obtain the current user's details
+iii) if the old password matches with the password stored in the db w.r.t. that user, then proceed further, else exit the process by giving an error
+iv) reassign the password field in the user object with the new password obtained from the req.body
+v) return a OK response to the user stating password has been changed/updated
