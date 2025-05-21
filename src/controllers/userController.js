@@ -254,6 +254,34 @@ const getCurrentUser = asyncHandler(async (req, res) => {
     .json({ message: 'Current user fetched successfully!', user });
 });
 
+const updateAccountDetails = asyncHandler(async (req, res) => {
+  const { fullName, email } = req.body;
+
+  if (!fullName || !email) {
+    return res.status(400).json({ error: 'All fields are mandatory' });
+  }
+
+  //now we're going to update the fullName and email field
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        fullName, //we can write like this (new syntax)
+        email: email, //we can write like this too (old syntax)
+      },
+    },
+    { new: true } // tells Mongoose to return the updated document, not the old one. So if we dont' write the {new : true} so even after update, mongoose will return the document as it was before update (old values)
+  ).select('-password');
+
+  if (!user) {
+    return res.status(404).json({ error: 'User does not exist' });
+  }
+
+  return res
+    .status(200)
+    .json({ message: 'Account details updated successfully!', user });
+});
+
 export {
   registerUser,
   loginUser,
@@ -261,4 +289,5 @@ export {
   refreshAccessToken,
   changeCurrentPassword,
   getCurrentUser,
+  updateAccountDetails,
 };
