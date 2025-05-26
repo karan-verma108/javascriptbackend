@@ -282,6 +282,89 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     .json({ message: 'Account details updated successfully!', user });
 });
 
+const updateUserAvatar = asyncHandler(async (req, res) => {
+  //let's first get the file path from the request object that user will upload
+  const coverImagePath = req?.file?.path;
+
+  //if we dont get cover image path so throw an error
+  if (!coverImagePath) {
+    return res.status(400).json({ error: 'Avatar file is missing' });
+  }
+
+  //now we got the avatar file so let's upload on cloudinary
+  const avatar = await uploadOnCloudinary(coverImagePath);
+
+  // if we get any error while uploading the file on cloudinary
+  if (!avatar) {
+    return res.status(500).json({
+      error: 'Error while uploading avatar on cloudinary during updation',
+    });
+  }
+
+  // assuming we the new avatar uploaded on cloudinary, we got the details from cloudinary of the uploaded file, so now we have to
+  // update the field in the DB
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        avatar: avatar?.url,
+      },
+    },
+    {
+      new: true,
+    }
+  ).select('-password');
+
+  //if user doesn't exist
+  if (!user) {
+    return res.status(404).json({ error: 'User not found!' });
+  }
+
+  res.status(200).json({ user, message: 'Avatar image updated successfully' });
+});
+
+const updateUserCoverImage = asyncHandler(async (req, res) => {
+  //again let's get the file path from the request boday
+  const coverImagePath = req?.file?.path;
+
+  //if this cover image path doesn't exist throw an error
+  if (!coverImagePath) {
+    return res.status(400).json({ error: 'Cover image file is missing' });
+  }
+
+  //now we're getting the cover image path so let's upload on cloudinary
+  const coverImage = await uploadOnCloudinary(coverImagePath);
+
+  //now if it's not uploaded on cloudinary
+  if (!coverImage?.url) {
+    return res.status(500).json({
+      error: 'Error while uploading cover image on cloudinary during updation',
+    });
+  }
+
+  //now we know the image has been uploaded successfully on cloudinary, so let's update the cover image field in the db
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        coverImage: coverImage?.url,
+      },
+    },
+    {
+      new: true,
+    }
+  ).select('-password');
+
+  if (!user) {
+    return res.status(404).json({ error: 'User not found !' });
+  }
+
+  //now we got the user obviously so let's return the response
+  return res
+    .status(200)
+    .json({ user, message: 'Cover image updated successfully' });
+});
+
 export {
   registerUser,
   loginUser,
@@ -290,4 +373,6 @@ export {
   changeCurrentPassword,
   getCurrentUser,
   updateAccountDetails,
+  updateUserAvatar,
+  updateUserCoverImage,
 };
