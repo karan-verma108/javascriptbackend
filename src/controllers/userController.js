@@ -3,6 +3,7 @@ import asyncHandler from '../utils/asyncHandler.js';
 import { User } from '../models/userSchema.js';
 import { uploadOnCloudinary } from '../utils/cloudinary.js';
 import { options } from '../contants.js';
+import { handleRemoveLocalFile } from '../utils/handleRemoveLocalFile.js';
 
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
@@ -284,15 +285,15 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 
 const updateUserAvatar = asyncHandler(async (req, res) => {
   //let's first get the file path from the request object that user will upload
-  const coverImagePath = req?.file?.path;
+  const avatarImagePath = req?.file?.path;
 
   //if we dont get cover image path so throw an error
-  if (!coverImagePath) {
+  if (!avatarImagePath) {
     return res.status(400).json({ error: 'Avatar file is missing' });
   }
 
   //now we got the avatar file so let's upload on cloudinary
-  const avatar = await uploadOnCloudinary(coverImagePath);
+  const avatar = await uploadOnCloudinary(avatarImagePath);
 
   // if we get any error while uploading the file on cloudinary
   if (!avatar) {
@@ -319,6 +320,9 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
   if (!user) {
     return res.status(404).json({ error: 'User not found!' });
   }
+
+  //remove the locally stored user avatar image
+  await handleRemoveLocalFile(avatarImagePath);
 
   res.status(200).json({ user, message: 'Avatar image updated successfully' });
 });
@@ -358,6 +362,9 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
   if (!user) {
     return res.status(404).json({ error: 'User not found !' });
   }
+
+  //remove the locally stored cover image
+  await handleRemoveLocalFile(coverImagePath);
 
   //now we got the user obviously so let's return the response
   return res
